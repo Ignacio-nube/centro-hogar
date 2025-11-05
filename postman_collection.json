@@ -1,0 +1,368 @@
+{
+  "info": {
+    "name": "Sistema Gestión Ventas API",
+    "description": "API completa para sistema de gestión de ventas con TypeScript",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Inicializar Sistema",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/inicializar",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "inicializar"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set(\"token\", jsonData.token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_usuario\": \"admin\",\n  \"contraseña\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_usuario\": \"vendedor1\",\n  \"contraseña_usu\": \"Vendedor123!\",\n  \"id_perfil\": 2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/registrar",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "registrar"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Clientes",
+      "item": [
+        {
+          "name": "Listar Clientes",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/clientes",
+              "host": ["{{base_url}}"],
+              "path": ["clientes"]
+            }
+          }
+        },
+        {
+          "name": "Crear Cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_cliente\": \"Juan\",\n  \"apellido_cliente\": \"Pérez\",\n  \"DNI_cliente\": \"12345678\",\n  \"direccion_cliente\": \"Av. Principal 123\",\n  \"telefono_cliente\": \"1234567890\",\n  \"mail_cliente\": \"juan@email.com\",\n  \"estado_cliente\": \"activo\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/clientes",
+              "host": ["{{base_url}}"],
+              "path": ["clientes"]
+            }
+          }
+        },
+        {
+          "name": "Verificar Estado Crédito",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/clientes/1/verificar-credito",
+              "host": ["{{base_url}}"],
+              "path": ["clientes", "1", "verificar-credito"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Productos",
+      "item": [
+        {
+          "name": "Listar Productos",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            }
+          }
+        },
+        {
+          "name": "Crear Producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_producto\": \"Sofá 3 Cuerpos\",\n  \"descripcion\": \"Sofá de tela gris\",\n  \"categoria\": \"muebles\",\n  \"stock\": 10,\n  \"stock_minimo\": 2,\n  \"id_proveedor\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/productos",
+              "host": ["{{base_url}}"],
+              "path": ["productos"]
+            }
+          }
+        },
+        {
+          "name": "Productos Bajo Stock",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/productos/bajo-stock",
+              "host": ["{{base_url}}"],
+              "path": ["productos", "bajo-stock"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ventas",
+      "item": [
+        {
+          "name": "Registrar Venta Contado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_cliente\": 1,\n  \"tipo_venta\": \"contado\",\n  \"id_tipo_pago\": 1,\n  \"detalles\": [\n    {\n      \"id_producto\": 1,\n      \"cantidad\": 1,\n      \"precio_unitario\": 5000,\n      \"usar_precio_credito\": false\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["ventas"]
+            }
+          }
+        },
+        {
+          "name": "Registrar Venta Crédito",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_cliente\": 1,\n  \"tipo_venta\": \"credito\",\n  \"id_tipo_pago\": 1,\n  \"detalles\": [\n    {\n      \"id_producto\": 1,\n      \"cantidad\": 2,\n      \"precio_unitario\": 5000,\n      \"usar_precio_credito\": true\n    }\n  ],\n  \"plan_pagos\": {\n    \"numero_cuotas\": 6,\n    \"frecuencia\": \"mensual\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["ventas"]
+            }
+          }
+        },
+        {
+          "name": "Listar Ventas",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/ventas",
+              "host": ["{{base_url}}"],
+              "path": ["ventas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cobranzas",
+      "item": [
+        {
+          "name": "Registrar Pago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_venta\": 1,\n  \"monto\": 2000,\n  \"id_tipo_pago\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/cobranzas/registrar-pago",
+              "host": ["{{base_url}}"],
+              "path": ["cobranzas", "registrar-pago"]
+            }
+          }
+        },
+        {
+          "name": "Cuentas Por Cobrar",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/cobranzas/cuentas-por-cobrar",
+              "host": ["{{base_url}}"],
+              "path": ["cobranzas", "cuentas-por-cobrar"]
+            }
+          }
+        },
+        {
+          "name": "Cuentas Vencidas",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/cobranzas/cuentas-vencidas",
+              "host": ["{{base_url}}"],
+              "path": ["cobranzas", "cuentas-vencidas"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Proveedores",
+      "item": [
+        {
+          "name": "Crear Proveedor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre_prov\": \"Muebles SA\",\n  \"direccion_prov\": \"Calle Industrial 456\",\n  \"contacto_prov\": \"ventas@mueblessa.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/proveedores",
+              "host": ["{{base_url}}"],
+              "path": ["proveedores"]
+            }
+          }
+        },
+        {
+          "name": "Registrar Compra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer {{token}}"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_proveedor\": 1,\n  \"detalles\": [\n    {\n      \"id_producto\": 1,\n      \"cantidad\": 50,\n      \"precio_unit\": 3000\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/proveedores/compra",
+              "host": ["{{base_url}}"],
+              "path": ["proveedores", "compra"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reportes",
+      "item": [
+        {
+          "name": "Reporte de Ventas",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/reportes/ventas?periodo=mes",
+              "host": ["{{base_url}}"],
+              "path": ["reportes", "ventas"],
+              "query": [{"key": "periodo", "value": "mes"}]
+            }
+          }
+        },
+        {
+          "name": "Flujo de Efectivo",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/reportes/flujo-efectivo",
+              "host": ["{{base_url}}"],
+              "path": ["reportes", "flujo-efectivo"]
+            }
+          }
+        },
+        {
+          "name": "Reporte de Inventario",
+          "request": {
+            "method": "GET",
+            "header": [{"key": "Authorization", "value": "Bearer {{token}}"}],
+            "url": {
+              "raw": "{{base_url}}/reportes/inventario",
+              "host": ["{{base_url}}"],
+              "path": ["reportes", "inventario"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
