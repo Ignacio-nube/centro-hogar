@@ -7,10 +7,9 @@ Esta guía te muestra cómo probar todos los endpoints del backend usando Postma
 ## 📋 Tabla de Contenidos
 
 1. [Configuración Inicial](#configuración-inicial)
-2. [Autenticación (Sin crear perfil)](#autenticación)
-3. [Configurar Headers Globales](#configurar-headers)
+2. [Autenticación](#autenticación)
+3. [Configurar Headers](#configurar-headers)
 4. [Pruebas por Módulo](#pruebas-por-módulo)
-5. [Colección de Variables](#variables-de-entorno)
 
 ---
 
@@ -24,52 +23,31 @@ npm run dev
 
 El servidor estará disponible en: `http://localhost:3000`
 
-### 2. Crear un Environment en Postman
+### 2. Importar Base de Datos
 
-1. Click en **Environments** (icono de engranaje)
-2. Click en **Create Environment**
-3. Nombre: `Backend Local`
-4. Agregar variables:
+Antes de usar el backend, ejecuta estos scripts SQL en orden:
 
-```
-Variable       | Initial Value              | Current Value
----------------|----------------------------|---------------------------
-base_url       | http://localhost:3000      | http://localhost:3000
-token          |                            | (se llenará después)
-id_cliente     |                            | (se llenará después)
-id_producto    |                            | (se llenará después)
-id_venta       |                            | (se llenará después)
+```bash
+# 1. Crear estructura de base de datos
+mysql -u root -p < database.sql
+
+# 2. Insertar datos iniciales (perfiles y tipos de pago)
+mysql -u root -p < init-data.sql
 ```
 
-5. Click en **Save**
-6. Seleccionar el environment en el dropdown (esquina superior derecha)
+O importarlos desde phpMyAdmin:
+1. Seleccionar base de datos `datos_negocio`
+2. Ir a **Importar**
+3. Seleccionar `database.sql` → **Continuar**
+4. Seleccionar `init-data.sql` → **Continuar**
 
 ---
 
 ## 🔐 Autenticación
 
-### Paso 1: Inicializar Sistema (Primera vez)
+### Paso 1: Registrar Usuario Administrador
 
-**GET** `{{base_url}}/api/auth/inicializar`
-
-**Sin headers, sin body**
-
-**Respuesta esperada:**
-```json
-{
-  "mensaje": "Sistema inicializado correctamente",
-  "perfiles_creados": 3,
-  "tipos_pago_creados": 4
-}
-```
-
-> ⚠️ **Importante:** Este endpoint solo debe ejecutarse UNA vez. Crea los perfiles y tipos de pago en la base de datos.
-
----
-
-### Paso 2: Registrar Usuario Administrador
-
-**POST** `{{base_url}}/api/auth/registrar`
+**POST** `http://localhost:3000/api/auth/registrar`
 
 **Headers:**
 ```
@@ -97,9 +75,9 @@ Content-Type: application/json
 
 ---
 
-### Paso 3: Login y Obtener Token
+### Paso 2: Login y Obtener Token
 
-**POST** `{{base_url}}/api/auth/login`
+**POST** `http://localhost:3000/api/auth/login`
 
 **Headers:**
 ```
@@ -129,31 +107,29 @@ Content-Type: application/json
 **🔑 COPIAR EL TOKEN**
 
 1. Copiar el valor del campo `token` (sin las comillas)
-2. Ir a **Environments** → **Backend Local**
-3. Pegar en la variable `token` (Current Value)
-4. Click en **Save**
+2. Este token debe usarse en el header `Authorization: Bearer <token>` de todas las siguientes peticiones
 
 ---
 
-## 🔒 Configurar Headers Globales
+## 🔒 Configurar Headers
 
-### Opción A: Header Manual (Cada Request)
-
-En cada request, agregar en la pestaña **Headers**:
+En cada request que requiera autenticación, agregar en la pestaña **Headers**:
 
 ```
 Key              | Value
------------------|---------------------------
+-----------------|------------------------------------------
 Content-Type     | application/json
-Authorization    | Bearer {{token}}
+Authorization    | Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-### Opción B: Configuración Automática (Recomendado)
+> 💡 **Tip:** Reemplaza el token de ejemplo con el que obtuviste en el login.
+
+Para no escribirlo en cada request:
 
 1. Click en tu colección de Postman
 2. Ir a la pestaña **Authorization**
 3. Type: `Bearer Token`
-4. Token: `{{token}}`
+4. Token: Pegar tu token JWT completo
 5. Click en **Save**
 
 Ahora todos los requests heredarán este header automáticamente.
@@ -168,12 +144,12 @@ Ahora todos los requests heredarán este header automáticamente.
 
 ### 1. Crear Cliente
 
-**POST** `{{base_url}}/api/clientes`
+**POST** `http://localhost:3000/api/clientes`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -197,17 +173,17 @@ Authorization: Bearer {{token}}
 }
 ```
 
-**📌 Guardar `id_cliente` en las variables de entorno**
+**📌 Guardar este ID para usar en otras peticiones**
 
 ---
 
 ### 2. Obtener Todos los Clientes
 
-**GET** `{{base_url}}/api/clientes`
+**GET** `http://localhost:3000/api/clientes`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -230,22 +206,22 @@ Authorization: Bearer {{token}}
 
 ### 3. Obtener Cliente por ID
 
-**GET** `{{base_url}}/api/clientes/{{id_cliente}}`
+**GET** `http://localhost:3000/api/clientes/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 4. Verificar Estado de Crédito
 
-**GET** `{{base_url}}/api/clientes/{{id_cliente}}/verificar-credito`
+**GET** `http://localhost:3000/api/clientes/1/verificar-credito`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -259,12 +235,12 @@ Authorization: Bearer {{token}}
 
 ### 5. Actualizar Cliente
 
-**PUT** `{{base_url}}/api/clientes/{{id_cliente}}`
+**PUT** `http://localhost:3000/api/clientes/1`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -279,33 +255,33 @@ Authorization: Bearer {{token}}
 
 ### 6. Bloquear Cliente
 
-**POST** `{{base_url}}/api/clientes/{{id_cliente}}/bloquear`
+**POST** `http://localhost:3000/api/clientes/1/bloquear`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 7. Desbloquear Cliente
 
-**POST** `{{base_url}}/api/clientes/{{id_cliente}}/desbloquear`
+**POST** `http://localhost:3000/api/clientes/1/desbloquear`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 8. Obtener Historial del Cliente
 
-**GET** `{{base_url}}/api/clientes/{{id_cliente}}/historial`
+**GET** `http://localhost:3000/api/clientes/1/historial`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
@@ -314,12 +290,12 @@ Authorization: Bearer {{token}}
 
 ### 1. Crear Producto
 
-**POST** `{{base_url}}/api/productos`
+**POST** `http://localhost:3000/api/productos`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -342,39 +318,39 @@ Authorization: Bearer {{token}}
 }
 ```
 
-**📌 Guardar `id_producto` en las variables de entorno**
+**📌 Guardar este ID para usar en otras peticiones**
 
 ---
 
 ### 2. Obtener Todos los Productos
 
-**GET** `{{base_url}}/api/productos`
+**GET** `http://localhost:3000/api/productos`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 3. Obtener Producto por ID
 
-**GET** `{{base_url}}/api/productos/{{id_producto}}`
+**GET** `http://localhost:3000/api/productos/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 4. Obtener Productos con Bajo Stock
 
-**GET** `{{base_url}}/api/productos/bajo-stock`
+**GET** `http://localhost:3000/api/productos/bajo-stock`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -393,23 +369,23 @@ Authorization: Bearer {{token}}
 
 ### 5. Obtener Productos por Categoría
 
-**GET** `{{base_url}}/api/productos/categoria/Electrónica`
+**GET** `http://localhost:3000/api/productos/categoria/Electrónica`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 6. Actualizar Producto
 
-**PUT** `{{base_url}}/api/productos/{{id_producto}}`
+**PUT** `http://localhost:3000/api/productos/1`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -424,11 +400,11 @@ Authorization: Bearer {{token}}
 
 ### 7. Eliminar Producto
 
-**DELETE** `{{base_url}}/api/productos/{{id_producto}}`
+**DELETE** `http://localhost:3000/api/productos/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
@@ -437,12 +413,12 @@ Authorization: Bearer {{token}}
 
 ### 1. Crear Venta al Contado
 
-**POST** `{{base_url}}/api/ventas`
+**POST** `http://localhost:3000/api/ventas`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -471,18 +447,18 @@ Authorization: Bearer {{token}}
 }
 ```
 
-**📌 Guardar `id_venta` en las variables de entorno**
+**📌 Guardar este ID para usar en otras peticiones**
 
 ---
 
 ### 2. Crear Venta a Crédito
 
-**POST** `{{base_url}}/api/ventas`
+**POST** `http://localhost:3000/api/ventas`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -511,11 +487,11 @@ Authorization: Bearer {{token}}
 
 ### 3. Obtener Todas las Ventas
 
-**GET** `{{base_url}}/api/ventas`
+**GET** `http://localhost:3000/api/ventas`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -530,11 +506,11 @@ estado=completada
 
 ### 4. Obtener Venta por ID
 
-**GET** `{{base_url}}/api/ventas/{{id_venta}}`
+**GET** `http://localhost:3000/api/ventas/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -562,12 +538,12 @@ Authorization: Bearer {{token}}
 
 ### 5. Cancelar Venta
 
-**POST** `{{base_url}}/api/ventas/{{id_venta}}/cancelar`
+**POST** `http://localhost:3000/api/ventas/1/cancelar`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -583,12 +559,12 @@ Authorization: Bearer {{token}}
 
 ### 1. Registrar Pago
 
-**POST** `{{base_url}}/api/cobranzas/registrar-pago`
+**POST** `http://localhost:3000/api/cobranzas/registrar-pago`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -612,11 +588,11 @@ Authorization: Bearer {{token}}
 
 ### 2. Obtener Cuentas por Cobrar
 
-**GET** `{{base_url}}/api/cobranzas/cuentas-por-cobrar`
+**GET** `http://localhost:3000/api/cobranzas/cuentas-por-cobrar`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -640,22 +616,22 @@ Authorization: Bearer {{token}}
 
 ### 3. Obtener Cuentas Vencidas (>30 días)
 
-**GET** `{{base_url}}/api/cobranzas/cuentas-vencidas`
+**GET** `http://localhost:3000/api/cobranzas/cuentas-vencidas`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 4. Obtener Estado de Cuenta de Cliente
 
-**GET** `{{base_url}}/api/cobranzas/cliente/{{id_cliente}}`
+**GET** `http://localhost:3000/api/cobranzas/cliente/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -684,11 +660,11 @@ Authorization: Bearer {{token}}
 
 ### 5. Obtener Historial de Pagos de una Venta
 
-**GET** `{{base_url}}/api/cobranzas/venta/{{id_venta}}/historial`
+**GET** `http://localhost:3000/api/cobranzas/venta/1/historial`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
@@ -697,12 +673,12 @@ Authorization: Bearer {{token}}
 
 ### 1. Crear Proveedor
 
-**POST** `{{base_url}}/api/proveedores`
+**POST** `http://localhost:3000/api/proveedores`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -726,34 +702,34 @@ Authorization: Bearer {{token}}
 
 ### 2. Obtener Todos los Proveedores
 
-**GET** `{{base_url}}/api/proveedores`
+**GET** `http://localhost:3000/api/proveedores`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 3. Obtener Proveedor por ID
 
-**GET** `{{base_url}}/api/proveedores/1`
+**GET** `http://localhost:3000/api/proveedores/1`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 4. Registrar Compra a Proveedor
 
-**POST** `{{base_url}}/api/proveedores/compra`
+**POST** `http://localhost:3000/api/proveedores/compra`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -789,12 +765,12 @@ Authorization: Bearer {{token}}
 
 ### 5. Registrar Pago a Proveedor
 
-**POST** `{{base_url}}/api/proveedores/pago`
+**POST** `http://localhost:3000/api/proveedores/pago`
 
 **Headers:**
 ```
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Body:**
@@ -810,22 +786,22 @@ Authorization: Bearer {{token}}
 
 ### 6. Obtener Estado de Cuenta del Proveedor
 
-**GET** `{{base_url}}/api/proveedores/1/estado-cuenta`
+**GET** `http://localhost:3000/api/proveedores/1/estado-cuenta`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
 
 ### 7. Obtener Cuentas por Pagar
 
-**GET** `{{base_url}}/api/proveedores/cuentas-por-pagar`
+**GET** `http://localhost:3000/api/proveedores/cuentas-por-pagar`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
@@ -834,11 +810,11 @@ Authorization: Bearer {{token}}
 
 ### 1. Reporte de Ventas
 
-**GET** `{{base_url}}/api/reportes/ventas`
+**GET** `http://localhost:3000/api/reportes/ventas`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -868,11 +844,11 @@ periodo=mes
 
 ### 2. Reporte de Cobranzas
 
-**GET** `{{base_url}}/api/reportes/cobranzas`
+**GET** `http://localhost:3000/api/reportes/cobranzas`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -885,11 +861,11 @@ fecha_hasta=2024-12-31
 
 ### 3. Reporte de Flujo de Efectivo
 
-**GET** `{{base_url}}/api/reportes/flujo-efectivo`
+**GET** `http://localhost:3000/api/reportes/flujo-efectivo`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -916,11 +892,11 @@ fecha_hasta=2024-12-31
 
 ### 4. Reporte de Productos Más Vendidos
 
-**GET** `{{base_url}}/api/reportes/productos-mas-vendidos`
+**GET** `http://localhost:3000/api/reportes/productos-mas-vendidos`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -948,11 +924,11 @@ limite=10
 
 ### 5. Reporte de Clientes Top
 
-**GET** `{{base_url}}/api/reportes/clientes-top`
+**GET** `http://localhost:3000/api/reportes/clientes-top`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Query Params (opcionales):**
@@ -966,11 +942,11 @@ limite=10
 
 ### 6. Reporte de Inventario
 
-**GET** `{{base_url}}/api/reportes/inventario`
+**GET** `http://localhost:3000/api/reportes/inventario`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 **Respuesta esperada:**
@@ -1001,11 +977,11 @@ Authorization: Bearer {{token}}
 
 ### 7. Reporte de Proveedores
 
-**GET** `{{base_url}}/api/reportes/proveedores`
+**GET** `http://localhost:3000/api/reportes/proveedores`
 
 **Headers:**
 ```
-Authorization: Bearer {{token}}
+Authorization: Bearer <TU_TOKEN_JWT>
 ```
 
 ---
@@ -1060,7 +1036,7 @@ Authorization: Bearer {{token}}
   "mensaje": "Token no proporcionado"
 }
 ```
-**Solución:** Asegúrate de incluir el header `Authorization: Bearer {{token}}`
+**Solución:** Asegúrate de incluir el header `Authorization: Bearer <TU_TOKEN_JWT>`
 
 ---
 
@@ -1178,3 +1154,4 @@ Si encuentras problemas:
 ---
 
 **✅ ¡Listo! Ahora puedes probar todos los endpoints del backend con autenticación JWT.**
+
